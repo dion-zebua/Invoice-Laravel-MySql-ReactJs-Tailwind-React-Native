@@ -134,8 +134,8 @@ class InvoiceController extends Controller
             'status' => 'required|in:paid,unpaid',
 
 
-            'products.*.name' => 'required|string|max:30',
-            'products.*.unit' => 'required|string|max:30',
+            'products.*.name' => 'required|string|max:50',
+            'products.*.unit' => 'required|string|max:50',
             'products.*.price' => 'required|integer|min:0',
             'products.*.quantity' => 'required|integer|min:1',
             'products.*.amount' => 'required|integer|min:0',
