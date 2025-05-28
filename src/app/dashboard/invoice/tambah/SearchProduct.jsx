@@ -93,6 +93,7 @@ export default function SearchProduct(props) {
             productInvoiceSearch.map((row, i) => {
               return (
                 <div
+                  title={row.name}
                   key={i}
                   onFocus={() => setFocus(true)}
                   onClick={() => handleNewSearchProduct(row, product.idRow)}
