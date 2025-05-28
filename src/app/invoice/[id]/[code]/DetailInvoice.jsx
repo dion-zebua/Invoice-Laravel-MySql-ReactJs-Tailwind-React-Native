@@ -56,9 +56,9 @@ export default function Iframe(invoice) {
               </div>
               <div className="w-1/2 pl-10 text-right flex gap-y-2 flex-col">
                 <p className="pb-1 w-full font-semibold border-b inline-block">
-                  Invoice From :
+                  Invoice To :
                 </p>
-                <p>From : {data.to_sales}</p>
+                <p>To : {data.to_sales}</p>
                 <p>{data.to_name}</p>
                 <p>{data.to_address}</p>
                 <p>{data.to_email}</p>

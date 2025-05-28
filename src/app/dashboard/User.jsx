@@ -85,7 +85,7 @@ export default function User() {
             data?.data.length > 0 &&
             data?.data.map((col, i) => (
               <TableRow key={i}>
-                <TableCell>
+                <TableCell title={col?.name ?? "-"}>
                   <Link
                     className="underline"
                     target="_blank"
@@ -93,8 +93,12 @@ export default function User() {
                     {col?.name ?? "-"}
                   </Link>
                 </TableCell>
-                <TableCell>{col?.name ?? "-"}</TableCell>
-                <TableCell>{col?.telephone}</TableCell>
+                <TableCell title={col?.sales ?? "-"}>
+                  {col?.sales ?? "-"}
+                </TableCell>
+                <TableCell title={col?.telephone ?? "-"}>
+                  {col?.telephone}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-x-2 whitespace-nowrap">
                     {col?.is_verified == 1 ? (

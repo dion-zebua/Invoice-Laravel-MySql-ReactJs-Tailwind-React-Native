@@ -214,17 +214,21 @@ export default function IndexTable() {
             data?.data.map((col, i) => (
               <TableRow key={i}>
                 <TableCell>{i + data?.from}</TableCell>
-                <TableCell>{"#" + col["code"] ?? "-"}</TableCell>
+                <TableCell title={"#" + col["code"] ?? "-"}>
+                  {"#" + col["code"] ?? "-"}
+                </TableCell>
                 {user?.role == "admin" && (
-                  <TableCell>
+                  <TableCell title={col?.user?.name}>
                     <Link
                       className="underline"
                       href={`./pengguna/edit/${col?.user?.id}`}>
-                      {col?.user?.name}
+                      {col?.user?.name ?? "-"}
                     </Link>
                   </TableCell>
                 )}
-                <TableCell>{col?.to_name ?? "-"}</TableCell>
+                <TableCell title={col?.to_name ?? "-"}>
+                  {col?.to_name ?? "-"}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-x-2 whitespace-nowrap">
                     {col?.status == "paid" ? (
@@ -250,7 +254,8 @@ export default function IndexTable() {
                     )}
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell
+                  title={helper.convertToRupiah(col?.grand_total ?? 0)}>
                   {helper.convertToRupiah(col?.grand_total ?? 0)}
                 </TableCell>
                 <TableCell>

@@ -171,17 +171,21 @@ export default function IndexTable() {
               <TableRow key={i}>
                 <TableCell>{i + data?.from}</TableCell>
                 {user?.role == "admin" && (
-                  <TableCell>
+                  <TableCell title={col?.user?.name ?? "-"}>
                     <Link
                       className="underline"
                       href={`./pengguna/edit/${col?.user?.id}`}>
-                      {col?.user?.name}
+                      {col?.user?.name ?? "-"}
                     </Link>
                   </TableCell>
                 )}
-                <TableCell>{col?.name ?? "-"}</TableCell>
-                <TableCell>{col?.unit ?? "-"}</TableCell>
-                <TableCell>
+                <TableCell title={col?.name ?? "-"}>
+                  {col?.name ?? "-"}
+                </TableCell>
+                <TableCell title={col?.unit ?? "-"}>
+                  {col?.unit ?? "-"}
+                </TableCell>
+                <TableCell title={helper.convertToRupiah(col?.price ?? 0)}>
                   {helper.convertToRupiah(col?.price ?? 0)}
                 </TableCell>
                 <TableCell>

@@ -178,8 +178,8 @@ export default function IndexTable() {
             data?.data.map((col, i) => (
               <TableRow key={i}>
                 <TableCell>{i + data?.from}</TableCell>
-                <TableCell>{col?.name ?? "-"}</TableCell>
-                <TableCell>{col?.sales ?? "-"}</TableCell>
+                <TableCell title={col?.name ?? "-"}>{col?.name ?? "-"}</TableCell>
+                <TableCell title={col?.sales ?? "-"}>{col?.sales ?? "-"}</TableCell>
                 <TableCell>
                   <div
                     className={`inline-block font-medium border-2 text-slate-100 px-2 py-0.1 rounded-full ${
@@ -190,7 +190,7 @@ export default function IndexTable() {
                     {col?.role}
                   </div>
                 </TableCell>
-                <TableCell>{col?.telephone ?? "-"}</TableCell>
+                <TableCell title={col?.telephone ?? "-"}>{col?.telephone ?? "-"}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-x-2 whitespace-nowrap">
                     {col?.is_verified == 1 ? (
