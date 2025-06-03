@@ -2,41 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\SendForgotPassword;
+use App\Http\Requests\Auth\SendVerification;
+use App\Http\Requests\User\ResetPassword as UserResetPassword;
 use App\Mail\ResetPassword;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Mail\Verification;
-use Illuminate\Support\Str;
+use App\Traits\BaseResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Validator;
 
 
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    use BaseResponse;
+
+    /**
+     * Login
+     */
+    public function login(LoginRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
-
-        $user = User::where('email', $request['email'])->first();
+        $user = User::where('email', $validated['email'])->first();
 
         if ($user && !$user->is_verified) {
             return $this->unverified();
         }
 
-        if (!$user || !Hash::check($request['password'], $user->password)) {
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Email / password salah.',
@@ -53,6 +54,9 @@ class AuthController extends Controller
         ], 200);
     }
 
+    /**
+     * Logout
+     */
     public function logout()
     {
         /** @var User $user */
@@ -60,23 +64,18 @@ class AuthController extends Controller
 
         /** @var PersonalAccessToken $user */
         $user->currentAccessToken()->delete();
-        return response()->json([
-            'status' => true,
-            'message' => 'Berhasil logout.',
-        ], 200);
+        return $this->success('Berhasil logout.');
     }
 
-    public function sendVerification(Request $request)
+    /**
+     * Send verification Email
+     */
+    public function sendVerification(SendVerification $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
-        ]);
 
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
+        $validated = $request->validated();
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $validated['email'])->first();
         if (!$user) {
             return $this->dataNotFound('Email');
         }
@@ -101,19 +100,17 @@ class AuthController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Email Verifikasi telah terkirim.',
-            ], 200);
+            return $this->success('Email Verifikasi telah terkirim.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+
+            return $this->errorResponse($e->getMessage());
         }
     }
 
+    /**
+     * Check verification Email
+     */
     public function checkVerification($id, $token)
     {
         $user = User::where('id', $id)
@@ -133,24 +130,17 @@ class AuthController extends Controller
             'email_verified_at' => Carbon::now(),
         ]);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Verifikasi berhasil.',
-        ], 200);
+        return $this->success('Verifikasi berhasil.');
     }
 
-    public function sendForgotPassword(Request $request)
+    /**
+     * Send Forgot Password
+     */
+    public function sendForgotPassword(SendForgotPassword $request)
     {
+        $validated = $request->validated();
 
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
-
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $validated['email'])->first();
         if (!$user) {
             return $this->dataNotFound('Email');
         }
@@ -173,20 +163,18 @@ class AuthController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Email Reset Password telah terkirim.',
-            ], 200);
+            return $this->success('Email Reset Password telah terkirim.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+
+            return $this->errorResponse($e->getMessage());
         }
     }
 
-    public function checkResetPassword(Request $request, $id, $token)
+    /**
+     * Send Forgot Password
+     */
+    public function checkResetPassword($id, $token)
     {
 
         $user = User::where('id', $id)
@@ -198,23 +186,15 @@ class AuthController extends Controller
             return $this->dataNotFound('Token / Pengguna');
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Token Reset password valid.',
-        ], 200);
+        return $this->success('Token Reset password valid.');
     }
 
-    public function resetPassword(Request $request, $id, $token)
+    /**
+     * Reset Password
+     */
+    public function resetPassword(UserResetPassword $request, $id, $token)
     {
-
-        $validator = Validator::make($request->all(), [
-            'password' => 'required|string|min:8|max:30|confirmed',
-            'password_confirmation' => 'required|string|min:8|max:30',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
+        $validated = $request->validated();
 
         $user = User::where('id', $id)
             ->whereNotNull('token_reset_password')
@@ -228,15 +208,15 @@ class AuthController extends Controller
         $user->update([
             'token_reset_password' => NULL,
             'token_reset_password_before_at' => NULL,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($validated['password']),
         ]);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Reset password berhasil.',
-        ], 200);
+        return $this->success('Reset password berhasil.');
     }
 
+    /**
+     * Check Login
+     */
     public function checkLogin()
     {
         return $this->dataFound(Auth::user(), 'Pengguna');

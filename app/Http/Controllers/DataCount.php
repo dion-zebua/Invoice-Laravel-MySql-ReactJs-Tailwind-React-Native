@@ -5,11 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\User;
+use App\Traits\BaseResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DataCount extends Controller
 {
+    use BaseResponse;
+
+    /**
+     * All Data Count
+     */
     public function allDataCount()
     {
         $auth = Auth::user();
