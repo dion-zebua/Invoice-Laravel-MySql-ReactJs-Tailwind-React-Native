@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Http\Controllers\Controller;
+use App\Traits\BaseResponse;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class UnverifiedMiddleware
 {
+    use BaseResponse;
     /**
      * Handle an incoming request.
      *
@@ -20,7 +21,7 @@ class UnverifiedMiddleware
     {
 
         if (Auth::check() && !Auth::user()->is_verified) {
-            return app(Controller::class)->unverified();
+            return $this->unauthorizedResponse('Anda belum verifikasi.');
         }
         return $next($request);
     }

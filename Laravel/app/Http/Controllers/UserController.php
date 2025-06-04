@@ -2,39 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\User\IndexRequest;
+use App\Http\Requests\User\ResetPassword;
+use App\Http\Requests\User\StoreRequest;
+use App\Http\Requests\User\UpdateRequest;
 use App\Models\User;
 use App\Mail\Verification;
+use App\Traits\BaseResponse;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
+    use BaseResponse;
     /**
-     * Display a listing of the resource.
+     * All Users.
      */
-    public function index(Request $request)
+    public function index(IndexRequest $request)
     {
 
-        $validator = Validator::make($request->all(), [
-            'perPage' => 'nullable|integer|in:5,10,20,50,100',
-            'is_verified' => 'nullable|in:0,1',
-            'search' => 'nullable|string',
-            'role' => 'nullable|string|in:admin,user',
-            'orderBy' => 'nullable|string|in:id,name,sales,telephone,invoice_count',
-            'orderDirection' => 'nullable|string|in:asc,desc',
-        ]);
+        $validated = $request->validated();
 
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
-
+        $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
         $is_verified = $request->input('is_verified');
         $search = $request->input('search', '');
@@ -58,9 +52,9 @@ class UserController extends Controller
                     ->orWhere('sales', 'like', "%{$search}%");
             })
             ->orderBy($orderBy, $orderDirection)
-            ->paginate($perPage);
+            ->paginate($perPage = $perPage, $page = $page);
 
-        $user->appends($validator->validated());
+        $user->appends($validated);
 
         if ($user->count() > 0) {
             return $this->dataFound($user, 'Pengguna');
@@ -77,48 +71,38 @@ class UserController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store User
      */
-    public function store(Request $request)
+    public function store(StoreRequest $request)
     {
-        $request['role'] = $request['role'] ?? 'user';
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:50',
-            'email' => 'required|email|unique:users,email',
-            'role' => 'required|string|in:admin,user',
-            'password' => 'required|string|min:8|max:30',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
+        $validated = $request->validated();
 
         $tokenVerified = Str::random(60);
 
         DB::beginTransaction();
         try {
             $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
                 'token_verified' => Hash::make($tokenVerified),
                 'token_verified_before_at' => now()->addMinutes(30),
             ]);
 
-            Mail::to($request->email)->send(new Verification($user, $tokenVerified, $request->password));
+            Mail::to($validated['email'])->send(new Verification($user, $tokenVerified, $validated['password']));
+
             DB::commit();
+
             return $this->createSuccess($user);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+
+            return $this->errorResponse($e->getMessage());
         }
     }
 
     /**
-     * Display the specified resource.
+     * Show User
      */
     public function show($id)
     {
@@ -146,10 +130,12 @@ class UserController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update User
      */
-    public function update(Request $request, $id)
+    public function update(UpdateRequest $request, $id)
     {
+        $validated = $request->validated();
+
         $user = User::find($id);
 
         if (!$user) {
@@ -161,24 +147,6 @@ class UserController extends Controller
             return $this->unauthorizedResponse();
         }
 
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:50',
-            'email' => 'required|email|unique:users,email,' . $id,
-            'sales' => 'required|string|max:50',
-            'logo' => (!File::exists($user->logo['path']) ? "required" : 'nullable') . '|image|mimes:jpeg,jpg,png,webp|max:3072',
-            'telephone' => 'required|string|min:6|max:15',
-            'address' => 'required|string|max:100',
-            'payment_methode' => 'required|string|max:100',
-            'payment_name' => 'required|string|max:100',
-            'payment_number' => 'required|string|max:100',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
-
-        $validatedData = $validator->validated();
-
         if ($request->hasFile('logo')) {
             $file = $request->file('logo');
             $filename = time() . '-' . Str::random(5) . '-' . Str::slug($request->name)  . '.' . $file->getClientOriginalExtension();
@@ -189,12 +157,12 @@ class UserController extends Controller
                 File::delete($oldImage);
             }
 
-            $validatedData['logo'] = "img/company/$filename";
+            $validated['logo'] = "img/company/$filename";
         }
 
         DB::beginTransaction();
         try {
-            if ($user->email != $validatedData['email']) {
+            if ($user->email != $validated['email']) {
 
                 $tokenTime = Carbon::parse($user->token_verified_before_at);
                 if ($user->token_verified_before_at && !$tokenTime->isPast()) {
@@ -203,58 +171,48 @@ class UserController extends Controller
 
                 $tokenVerified = Str::random(60);
 
-                $validatedData['id'] = $id;
-                $validatedData['token_verified'] = Hash::make($tokenVerified);
-                $validatedData['token_verified_before_at'] = now()->addMinutes(30);
-                $validatedData['is_verified'] = false;
-                $validatedData['email_verified_at'] = NULL;
+                $validated['id'] = $id;
+                $validated['token_verified'] = Hash::make($tokenVerified);
+                $validated['token_verified_before_at'] = now()->addMinutes(30);
+                $validated['is_verified'] = false;
+                $validated['email_verified_at'] = NULL;
 
-                Mail::to($validatedData['email'])->send(new Verification($validatedData, $tokenVerified));
+                Mail::to($validated['email'])->send(new Verification($validated, $tokenVerified));
             }
-            $user->update($validatedData);
+            $user->update($validated);
 
             DB::commit();
 
             return $this->editSuccess($user);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+            return $this->errorResponse($e->getMessage());
         }
     }
 
 
-    public function resetPassword(Request $request)
+    /**
+     * Reset Password User
+     */
+    public function resetPassword(ResetPassword $request)
     {
+        
+        $validated = $request->validated();
 
         $user = User::where('id', Auth::id())->first();
         if (!$user) {
             return $this->dataNotFound('Token / Pengguna');
         }
 
-        $validator = Validator::make($request->all(), [
-            'password' => 'required|string|min:8|max:30|confirmed',
-            'password_confirmation' => 'required|string|min:8|max:30',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
-
         $user->update([
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($validated['password']),
         ]);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Reset password berhasil.',
-        ], 200);
+        return $this->success('Reset password berhasil.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Destroy User
      */
     public function destroy($id)
     {

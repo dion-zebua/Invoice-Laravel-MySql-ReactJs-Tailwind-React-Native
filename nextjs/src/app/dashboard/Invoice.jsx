@@ -86,7 +86,7 @@ export default function Invoice() {
             data?.data.length > 0 &&
             data?.data.map((col, i) => (
               <TableRow key={i}>
-                <TableCell>
+                <TableCell title={"#" + col["code"] ?? "-"}>
                   <Link
                     className="underline"
                     target="_blank"
@@ -95,15 +95,17 @@ export default function Invoice() {
                   </Link>
                 </TableCell>
                 {user?.role == "admin" && (
-                  <TableCell>
+                  <TableCell title={col?.user?.name ?? "-"}>
                     <Link
                       className="underline"
                       href={`/dashboard/pengguna/edit/${col?.user?.id}`}>
-                      {col?.user?.name}
+                      {col?.user?.name ?? "-"}
                     </Link>
                   </TableCell>
                 )}
-                <TableCell>{col?.to_name ?? "-"}</TableCell>
+                <TableCell title={col?.to_name ?? "-"}>
+                  {col?.to_name ?? "-"}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-x-2 whitespace-nowrap">
                     {col?.status == "paid" ? (
@@ -129,7 +131,8 @@ export default function Invoice() {
                     )}
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell
+                  title={helper.convertToRupiah(col?.grand_total ?? 0)}>
                   {helper.convertToRupiah(col?.grand_total ?? 0)}
                 </TableCell>
               </TableRow>

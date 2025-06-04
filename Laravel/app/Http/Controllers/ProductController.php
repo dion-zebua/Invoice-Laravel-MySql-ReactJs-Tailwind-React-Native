@@ -2,34 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Product\IndexRequest;
+use App\Http\Requests\Product\StoreRequest;
 use App\Models\Product;
-use App\Http\Requests\StoreProductRequest;
-use App\Http\Requests\UpdateProductRequest;
-use Illuminate\Auth\Events\Validated;
+use App\Traits\BaseResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Js;
 
 class ProductController extends Controller
 {
+    use BaseResponse;
     /**
-     * Display a listing of the resource.
+     * All Products.
      */
-    public function index(Request $request)
+    public function index(IndexRequest $request)
     {
+        $validated = $request->validated();
 
-        $validator = Validator::make($request->all(), [
-            'perPage' => 'nullable|integer|in:5,10,20,50,100',
-            'search' => 'nullable|string',
-            'orderBy' => 'nullable|string|in:id,name,unit,price',
-            'orderDirection' => 'nullable|string|in:asc,desc',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
-
+        $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
         $search = $request->input('search', '');
         $orderBy = $request->input('orderBy', 'id');
@@ -47,9 +37,9 @@ class ProductController extends Controller
                     ->orWhere('price', 'like', "%{$search}%");
             })
             ->orderBy($orderBy, $orderDirection)
-            ->paginate($perPage);
+            ->paginate($perPage = $perPage, $page = $page);
 
-        $product->appends($validator->validated());
+        $product->appends($validated);
 
         if ($product->count() > 0) {
             return $this->dataFound($product, 'Produk');
@@ -66,34 +56,21 @@ class ProductController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store Product
      */
-    public function store(Request $request)
+    public function store(StoreRequest $request)
     {
         $user = Auth::user();
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:50',
-            'unit' => 'required|string|max:50',
-            'price' => 'required|integer|min:0',
-        ]);
+        $validated = $request->validated();
 
+        $validated['users_id'] = $user->id;
 
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
-        $validatedData = $validator->validated();
-        $validatedData['users_id'] = $user->id;
-
-        $product = Product::create($validatedData);
-        return response()->json([
-            'status' => true,
-            'message' => 'Berhasil tambah',
-            'data' => $product,
-        ], 201);
+        $product = Product::create($validated);
+        return $this->createSuccess($product);
     }
 
     /**
-     * Display the specified resource.
+     * Show Product
      */
     public function show($id)
     {
@@ -121,7 +98,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update Product
      */
     public function update(Request $request, $id)
     {
@@ -136,17 +113,9 @@ class ProductController extends Controller
             return $this->unauthorizedResponse();
         }
 
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:50',
-            'unit' => 'required|string|max:50',
-            'price' => 'required|integer|min:0',
-        ]);
+        $validated = $request->validated();
 
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
-
-        $product->update($validator->validated());
+        $product->update($validated);
         return $this->editSuccess($product);
     }
 

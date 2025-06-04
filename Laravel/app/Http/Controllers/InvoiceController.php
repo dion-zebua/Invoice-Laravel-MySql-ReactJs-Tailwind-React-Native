@@ -2,36 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Invoice\IndexRequest;
+use App\Http\Requests\Invoice\StoreRequest;
+use App\Http\Requests\Invoice\UpdateRequest;
 use App\Models\Invoice;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use App\Http\Requests\StoreInvoiceRequest;
-use App\Http\Requests\UpdateInvoiceRequest;
 use App\Models\InvoiceProduct;
+use App\Traits\BaseResponse;
 use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
+    use BaseResponse;
     /**
-     * Display a listing of the resource.
+     * All Invoices
      */
-    public function index(Request $request)
+    public function index(IndexRequest $request)
     {
+        $validated = $request->validated();
 
-        $validator = Validator::make($request->all(), [
-            'perPage' => 'nullable|integer|in:5,10,20,50,100',
-            'search' => 'nullable|string',
-            'status' => 'nullable|string|in:paid,unpaid',
-            'orderBy' => 'nullable|string|in:id,users_id,code,to_name,grand_total',
-            'orderDirection' => 'nullable|string|in:asc,desc',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
-
+        $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
         $search = $request->input('search', '');
         $status = $request->input('status');
@@ -66,9 +58,10 @@ class InvoiceController extends Controller
                 }
             })
             ->orderBy($orderBy, $orderDirection)
-            ->paginate($perPage);
+            ->paginate($perPage = $perPage, $page = $page);
 
-        $invoice->appends($validator->validate());
+
+        $invoice->appends($validated);
 
         if ($invoice->count() > 0) {
             return $this->dataFound($invoice, 'Invoice');
@@ -85,9 +78,9 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store Invoice.
      */
-    public function store(Request $request)
+    public function store(StoreRequest $request)
     {
         $user = Auth::user();
         $code = Str::upper(Str::random(7));
@@ -116,69 +109,43 @@ class InvoiceController extends Controller
             : $request['grand_total'] - $request['down_payment'];
 
 
-        $validator = Validator::make($request->all(), [
-            'code' => 'required|string|unique:invoices,code',
-            'expire' => 'required|date|after_or_equal:today',
-            'to_name' => 'required|string|max:30',
-            'to_sales' => 'required|string|max:30',
-            'to_address' => 'required|string|max:70',
-            'to_telephone' => 'required|string|max:15|min:6',
-            'to_email' => 'required|email',
-            'sub_total' => 'required|integer|min:0',
-            'discount' => 'required|integer|min:0',
-            'total' => 'required|integer|min:0',
-            'tax' => 'required|in:1,0',
-            'grand_total' => 'required|integer|min:0',
-            'down_payment' => 'required|integer|min:0',
-            'remaining_balance' => 'required|integer|min:0',
-            'status' => 'required|in:paid,unpaid',
-
-
-            'products.*.name' => 'required|string|max:50',
-            'products.*.unit' => 'required|string|max:50',
-            'products.*.price' => 'required|integer|min:0',
-            'products.*.quantity' => 'required|integer|min:1',
-            'products.*.amount' => 'required|integer|min:0',
-            'products' => 'required|array',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
+        $validated = $request->validated();
 
         try {
-            Db::transaction(function () use ($request, $code, $validator) {
+            Db::transaction(function () use ($code, $validated) {
 
-                $invoice = Invoice::create($validator->valid());
+                Invoice::create($validated);
 
-                $productCollect = collect($request->products);
-                foreach ($request['products'] as $key => $product) {
-                    InvoiceProduct::create([
+                $data = [];
+
+                foreach ($validated['products'] as $product) {
+                    $data[] = [
                         'invoices_code' => $code,
                         'name' => $product['name'],
                         'unit' => $product['unit'],
                         'price' => $product['price'],
                         'quantity' => $product['quantity'],
                         'amount' => $product['amount'],
-                    ]);
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
                 }
+
+                InvoiceProduct::insert($data);
             });
 
             DB::commit();
 
-            return $this->createSuccess($validator->valid());
+            return $this->createSuccess($validated);
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return response()->json([
-                'status' => true,
-                'message' => $e->getMessage() . $e->getLine(),
-            ]);
+            return $this->errorResponse($e->getMessage());
         }
     }
 
     /**
-     * Display the specified resource.
+     * Show Invoice
      */
     public function show($id, $code)
     {
@@ -203,9 +170,9 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update Invoice
      */
-    public function update(Request $request, $id)
+    public function update(UpdateRequest $request, $id)
     {
         $invoice = Invoice::find($id);
 
@@ -219,26 +186,17 @@ class InvoiceController extends Controller
         }
 
         if ($invoice->status == 'paid') {
-            return response()->json([
-                'status' => 'false',
-                'message' => 'Invoice lunas! Tidak bisa edit.',
-            ], 403);
+            return $this->unauthorizedResponse('Invoice lunas! Tidak bisa edit.');
         }
 
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:paid,unpaid',
-        ]);
+        $validated = $request->validated();
 
-        if ($validator->fails()) {
-            return $this->unprocessableContent($validator);
-        }
-
-        $invoice->update($validator->validated());
+        $invoice->update($validated);
         return $this->editSuccess($invoice);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Destroy Invoice
      */
     public function destroy($id)
     {

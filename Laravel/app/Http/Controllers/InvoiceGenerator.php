@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Traits\BaseResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 
 class InvoiceGenerator extends Controller
 {
+    use BaseResponse;
+
     public function generate($id, $code, $action)
     {
         $invoice = Invoice::where('id', $id)
@@ -44,17 +47,26 @@ class InvoiceGenerator extends Controller
         ]);
     }
 
+    /**
+     * Stream Data Invoice
+     */
     public function stream($id, $code)
     {
 
         return $this->generate($id, $code, 'stream');
     }
 
+    /**
+     * Download Data Invoice
+     */
     public function download($id, $code)
     {
         return $this->generate($id, $code, 'download');
     }
 
+    /**
+     * Show Data Invoice
+     */
     public function show($id, $code)
     {
         $invoice = Invoice::where('id', $id)

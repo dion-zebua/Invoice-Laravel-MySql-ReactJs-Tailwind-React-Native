@@ -2,13 +2,13 @@
 
 namespace App\Http\Middleware;
 
+use App\Traits\BaseResponse;
 use Closure;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\Response;
 
 class CompanyMiddleware
 {
+    use BaseResponse;
     /**
      * Handle an incoming request.
      *
@@ -20,10 +20,7 @@ class CompanyMiddleware
 
         if (Auth::check() && Auth::user()->role == "user" && !$this->isProfileIncomplete(Auth::user())) {
 
-            return response()->json([
-                'status' => 'false',
-                'message' => 'Lengkapi profil anda.',
-            ], 403);
+            return $this->unauthorizedResponse('Lengkapi profil anda.');
         }
 
         return $next($request);
