@@ -82,37 +82,19 @@ class InvoiceController extends Controller
      */
     public function store(StoreRequest $request)
     {
-        $user = Auth::user();
         $code = Str::upper(Str::random(7));
-
-        $productCollect = collect($request->products);
-
-        $productRes = $productCollect->map(function ($item) {
-            $item['amount'] = ($item['price'] ?? 0) * ($item['quantity'] ?? 0);
-            return $item;
-        });
-
-        $request['products'] = $productRes->toArray();
-        $request['code'] = $code;
-        $request['users_id'] = $user->id;
-
-        $subTotal = $productRes->sum('amount');
-        $request['sub_total'] = $subTotal;
-        $request['total'] = $subTotal - $request['discount'];
-
-        $request['grand_total'] = $request['tax'] == 1
-            ? $request['total'] * 0.89
-            : $request['total'];
-
-        $request['remaining_balance'] = $request->status === 'paid'
-            ? $request['grand_total']
-            : $request['grand_total'] - $request['down_payment'];
-
+        $user = Auth::user();
 
         $validated = $request->validated();
 
+        
+        $validated['code'] = $code;
+        $validated['users_id'] = $user->id;
+
+        return $validated;
+
         try {
-            Db::transaction(function () use ($code, $validated) {
+            Db::transaction(function () use ($validated) {
 
                 Invoice::create($validated);
 
@@ -120,7 +102,7 @@ class InvoiceController extends Controller
 
                 foreach ($validated['products'] as $product) {
                     $data[] = [
-                        'invoices_code' => $code,
+                        'invoices_code' => $validated['code'],
                         'name' => $product['name'],
                         'unit' => $product['unit'],
                         'price' => $product['price'],
