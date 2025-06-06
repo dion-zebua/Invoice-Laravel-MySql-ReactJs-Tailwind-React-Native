@@ -91,8 +91,6 @@ class InvoiceController extends Controller
         $validated['code'] = $code;
         $validated['users_id'] = $user->id;
 
-        return $validated;
-
         try {
             Db::transaction(function () use ($validated) {
 
