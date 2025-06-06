@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Invoice;
 
 use App\Traits\BaseResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreRequest extends FormRequest
@@ -24,7 +26,6 @@ class StoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => 'required|string|unique:invoices,code',
             'expire' => 'required|date|after_or_equal:today',
             'to_name' => 'required|string|max:30',
             'to_sales' => 'required|string|max:30',
@@ -48,5 +49,29 @@ class StoreRequest extends FormRequest
             'products.*.amount' => 'required|integer|min:0',
             'products' => 'required|array|max:20',
         ];
+    }
+
+    public function prepareForValidation()
+    {
+        $productCollect = collect($this->products);
+
+        $productRes = $productCollect->map(function ($item) {
+            $item['amount'] = ($item['price'] ?? 0) * ($item['quantity'] ?? 0);
+            return $item;
+        });
+
+        $this['products'] = $productRes->toArray();
+
+        $subTotal = $productRes->sum('amount');
+        $this['sub_total'] = $subTotal;
+        $this['total'] = $subTotal - $this['discount'];
+
+        $this['grand_total'] = $this['tax'] == 1
+            ? $this['total'] * 0.89
+            : $this['total'];
+
+        $this['remaining_balance'] = $this->status === 'paid'
+            ? $this['grand_total']
+            : $this['grand_total'] - $this['down_payment'];
     }
 }
