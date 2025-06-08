@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Product\IndexRequest;
 use App\Http\Requests\Product\StoreRequest;
+use App\Http\Requests\Product\UpdateRequest;
 use App\Models\Product;
 use App\Traits\BaseResponse;
 use Illuminate\Http\Request;
@@ -100,7 +101,7 @@ class ProductController extends Controller
     /**
      * Update Product
      */
-    public function update(Request $request, $id)
+    public function update(UpdateRequest $request, $id)
     {
         $product = Product::find($id);
 
