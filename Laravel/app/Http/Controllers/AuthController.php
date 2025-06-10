@@ -34,7 +34,7 @@ class AuthController extends Controller
         $user = User::where('email', $validated['email'])->first();
 
         if ($user && !$user->is_verified) {
-            return $this->unverified();
+            return $this->unauthorizedResponse('Anda belum verifikasi.');
         }
 
         if (!$user || !Hash::check($validated['password'], $user->password)) {
