@@ -3,6 +3,7 @@
 return [
     'accepted' => 'Kolom :attribute harus diterima.',
     'active_url' => 'Kolom :attribute bukan URL yang valid.',
+    'after_or_equal' => 'Kolom :attribute harus tanggal setelah atau sama dengan :date.',
     'after' => 'Kolom :attribute harus setelah tanggal :date.',
     'alpha' => 'Kolom :attribute hanya boleh berisi huruf.',
     'alpha_dash' => 'Kolom :attribute hanya boleh berisi huruf, angka, dan tanda hubung.',
