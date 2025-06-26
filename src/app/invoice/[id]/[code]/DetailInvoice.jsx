@@ -12,7 +12,9 @@ export default function Iframe(invoice) {
           {/* Status */}
           <div className="py-3 bg-blue-300 text-slate-50 flex justify-around italic">
             {Array.from({ length: 3 }).map((_, index) => (
-              <p key={index} className="px-5">
+              <p
+                key={index}
+                className="px-5">
                 {data.status}, {new Date(data.expire) < new Date() && "expired"}
               </p>
             ))}
@@ -35,7 +37,7 @@ export default function Iframe(invoice) {
               <div className="flex flex-col text-right gap-y-3">
                 <p className="font-semibold">#INV-{data.code}</p>
                 <p>Create {helper.convertDate(data.created_at)}</p>
-                <p>Expire {helper.convertDate(data.expire)}</p>
+                <p>Expire {helper.convertDate(data.expire.split(" ")[0])}</p>
               </div>
             </div>
           </div>
@@ -48,21 +50,21 @@ export default function Iframe(invoice) {
                 <p className="pb-1 w-full font-semibold border-b inline-block">
                   Invoice From :
                 </p>
-                <p>From : {data.user.sales}</p>
-                <p>{data.user.name}</p>
-                <p>{data.user.address}</p>
-                <p>{data.user.email}</p>
-                <p>{data.user.telephone}</p>
+                <p title={data.user.sales}>From : {data.user.sales}</p>
+                <p title={data.user.name}>{data.user.name}</p>
+                <p title={data.user.address}>{data.user.address}</p>
+                <p title={data.user.email}>{data.user.email}</p>
+                <p title={data.user.telephone}>{data.user.telephone}</p>
               </div>
               <div className="w-1/2 pl-10 text-right flex gap-y-2 flex-col">
                 <p className="pb-1 w-full font-semibold border-b inline-block">
                   Invoice To :
                 </p>
-                <p>To : {data.to_sales}</p>
-                <p>{data.to_name}</p>
-                <p>{data.to_address}</p>
-                <p>{data.to_email}</p>
-                <p>{data.to_telephone}</p>
+                <p title={data.to_sales}>To : {data.to_sales}</p>
+                <p title={data.to_name}>{data.to_name}</p>
+                <p title={data.to_address}>{data.to_address}</p>
+                <p title={data.to_email}>{data.to_email}</p>
+                <p title={data.to_telephone}>{data.to_telephone}</p>
               </div>
             </div>
           </div>
@@ -86,7 +88,7 @@ export default function Iframe(invoice) {
                   return (
                     <tr key={i}>
                       <td>{i + 1}</td>
-                      <td>{e.name}</td>
+                      <td title={e.name}>{e.name}</td>
                       <td>{e.quantity}</td>
                       <td>{e.unit}</td>
                       <td>{helper.convertToRupiah(e.price)}</td>
@@ -109,7 +111,9 @@ export default function Iframe(invoice) {
                     rowSpan={3}
                     colSpan={4}>
                     <p className="font-semibold">Grand Total in Words:</p>
-                    <p className="pl-5 pt-3 !line-clamp-none">
+                    <p
+                      title={data.numberToWords}
+                      className="pl-5 pt-3 !line-clamp-none">
                       {data.numberToWords}
                     </p>
                   </td>
