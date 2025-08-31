@@ -15,7 +15,8 @@ export default function Iframe(invoice) {
               <p
                 key={index}
                 className="px-5">
-                {data.status}, {new Date(data.expire) < new Date() && "expired"}
+                {data.status}
+                {new Date(data.expire) < new Date() && ", expired"}
               </p>
             ))}
           </div>
@@ -36,7 +37,7 @@ export default function Iframe(invoice) {
               </div>
               <div className="flex flex-col text-right gap-y-3">
                 <p className="font-semibold">#INV-{data.code}</p>
-                <p>Create {helper.convertDate(data.created_at)}</p>
+                <p>Order {helper.convertDate(data.order)}</p>
                 <p>Expire {helper.convertDate(data.expire.split(" ")[0])}</p>
               </div>
             </div>
