@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             'role' => 'admin',
             'is_verified' => 1,
         ]);
+
         // $user = \App\Models\User::factory()->create([
         //     'name' => 'PT. Tester',
         //     'email' => 'user@gmail.com',
