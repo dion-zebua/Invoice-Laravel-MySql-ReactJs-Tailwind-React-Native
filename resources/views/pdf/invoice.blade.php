@@ -238,7 +238,7 @@
                         <td style="width: 50%; text-align: right;">
 
                             <p style="font-weight: bold">#INV-{{ $data->code }}</p>
-                            <p>Create {{ Carbon\Carbon::parse($data->order)->format('Y-m-d') }}</p>
+                            <p>Order {{ Carbon\Carbon::parse($data->order)->format('Y-m-d') }}</p>
                             <p>Expire {{ Carbon\Carbon::parse($data->expire)->format('Y-m-d') }}</p>
                         </td>
                     </tr>
