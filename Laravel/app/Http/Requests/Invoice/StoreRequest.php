@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Invoice;
 
 use App\Traits\BaseResponse;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,7 +27,8 @@ class StoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'expire' => 'required|date|after_or_equal:today',
+            'order' => 'required|date',
+            'expire' => 'required|date|after_or_equal:order',
             'to_name' => 'required|string|max:30',
             'to_sales' => 'required|string|max:30',
             'to_address' => 'required|string|max:70',
@@ -59,6 +61,9 @@ class StoreRequest extends FormRequest
             $item['amount'] = ($item['price'] ?? 0) * ($item['quantity'] ?? 0);
             return $item;
         });
+
+        $this['order'] = Carbon::parse($this->order)->format('Y-m-d H:i:s');
+        $this['expire'] = Carbon::parse($this->expire)->format('Y-m-d H:i:s');
 
         $this['products'] = $productRes->toArray();
 

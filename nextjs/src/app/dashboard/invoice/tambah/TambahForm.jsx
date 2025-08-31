@@ -31,6 +31,7 @@ export default function TambahForm(props) {
 
   const [data, setData] = useState({
     // Form Atas
+    order: "",
     expire: "",
     status: "paid",
     to_name: "",
@@ -183,8 +184,20 @@ export default function TambahForm(props) {
         loadingSubmit={loadingSubmit}
         className="sm:[&>div]:col-span-6"
         onSubmit={handleSubmit}>
-        {/* expire */}
-        <div>
+        {/* order */}
+        <div className="sm:!col-span-4">
+          <Label htmlFor="order">Order</Label>
+          <Input
+            className="!block"
+            type="date"
+            id="order"
+            onChange={handleChange}
+            required
+            value={data.order}
+          />
+        </div>
+
+        <div className="sm:!col-span-4">
           <Label htmlFor="expire">Expire</Label>
           <Input
             className="!block"
@@ -197,7 +210,7 @@ export default function TambahForm(props) {
         </div>
 
         {/* status */}
-        <div>
+        <div className="sm:!col-span-4">
           <Label htmlFor="status">Status</Label>
           <Select
             id="status"

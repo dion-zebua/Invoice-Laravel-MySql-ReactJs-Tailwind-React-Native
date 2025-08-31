@@ -35,6 +35,8 @@ class InvoiceController extends Controller
             'id',
             'users_id',
             'code',
+            'order',
+            'expire',
             'to_name',
             'to_telephone',
             'to_email',
@@ -87,7 +89,6 @@ class InvoiceController extends Controller
 
         $validated = $request->validated();
 
-        
         $validated['code'] = $code;
         $validated['users_id'] = $user->id;
 
