@@ -7,14 +7,13 @@ const whatsapp = (message = null) => {
 }
 
 const convertDate = (time) => {
-    const date = new Date(time);
+    const date = new Date(time.replace(' ', 'T'));
 
-    const yyyy = date.getUTCFullYear();
-    const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(date.getUTCDate()).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
 
-    const formatted = `${yyyy}-${mm}-${dd}`;
-    return formatted
+    return `${yyyy}-${mm}-${dd}`;
 
 }
 
