@@ -27,7 +27,7 @@ export default function Iframe(invoice) {
             <div className="flex justify-between items-center py-4">
               <div className="">
                 <Image
-                  className="max-w-[110px] max-h-[70px]"
+                  className="max-w-[110px] max-h-[70px] object-contain"
                   src={data.user.logo.result}
                   width={100}
                   height={25}
@@ -150,7 +150,7 @@ export default function Iframe(invoice) {
                   <td>Tax</td>
                   <td>
                     {helper.convertToRupiah(
-                      data.tax == 1 ? (data.total * 11) / 100 : 0
+                      data.tax == 1 ? (data.total * 11) / 100 : 0,
                     )}
                   </td>
                 </tr>
